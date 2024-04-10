@@ -36,7 +36,7 @@ dependencies:
   url_launcher_android: 6.0.27
   url_launcher_ios: 6.1.4
   url_launcher_platform_interface: 2.1.2
-  audioplayers: ^0.20.1
+  audioplayers: ^5.2.0
   assets_audio_player: ^3.0.0
 
 dev_dependencies:
