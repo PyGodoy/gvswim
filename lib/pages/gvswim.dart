@@ -222,6 +222,22 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                 ),
               ),
             ),
+            Align(
+              alignment: AlignmentDirectional(0,0),
+              child: Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(0, 0, 12, 0),
+                child: IconButton(
+                  icon: FaIcon(
+                    FontAwesomeIcons.info,
+                    color: Color(0xFF2797FF),
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(context,"/creatorInfo");
+                  },
+                ),
+              ),
+            )
           ],
           centerTitle: false,
           elevation: 0,
