@@ -1,7 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
@@ -47,7 +46,12 @@ class GvswimModel {
 late AudioPlayer advancedPlayer;
 
 class GvswimWidget extends StatefulWidget {
-  const GvswimWidget({Key? key}) : super(key: key);
+  final bool isDarkMode;
+  final Function() toggleTheme;
+
+  const GvswimWidget(
+      {Key? key, required this.isDarkMode, required this.toggleTheme})
+      : super(key: key);
 
   @override
   State<GvswimWidget> createState() => _GvswimWidgetState();
@@ -192,52 +196,51 @@ class _GvswimWidgetState extends State<GvswimWidget> {
           ? FocusScope.of(context).requestFocus(_model.textFieldFocusNode1)
           : FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Color(0xFFF0F5F9),
+        backgroundColor: widget.isDarkMode ? Colors.black : Color(0xFFF0F5F9),
         appBar: AppBar(
-          backgroundColor: Color(0xFFF0F5F9),
+          backgroundColor: widget.isDarkMode ? Colors.black : Color(0xFFF0F5F9),
           automaticallyImplyLeading: false,
           title: Text(
             'GV SWIM',
             style: GoogleFonts.getFont(
               'Outfit',
-              color: Color(0xFF161C24),
+              color: widget.isDarkMode
+                  ? Colors.white
+                  : Color(
+                      0xFF161C24), // Alterado para branco se o modo escuro estiver ativado
               fontSize: 32,
               fontWeight: FontWeight.w600,
             ),
           ),
           actions: [
-            Align(
-              alignment: AlignmentDirectional(0, 0),
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0, 0, 12, 0),
-                child: IconButton(
-                  icon: FaIcon(
-                    FontAwesomeIcons.home,
-                    color: Color(0xFF2797FF),
-                    size: 24,
-                  ),
-                  onPressed: () {
-                    print('IconButton pressed ...');
-                  },
+            AnimatedSwitcher(
+              duration: Duration(milliseconds: 500),
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(
+                  scale: animation,
+                  child: child,
+                );
+              },
+              child: IconButton(
+                key: ValueKey<bool>(widget.isDarkMode),
+                icon: Icon(
+                  widget.isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                  color: widget.isDarkMode ? Colors.white : Color(0xFF2797FF),
                 ),
+                onPressed: () {
+                  widget.toggleTheme();
+                },
               ),
             ),
-            Align(
-              alignment: AlignmentDirectional(0,0),
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0, 0, 12, 0),
-                child: IconButton(
-                  icon: FaIcon(
-                    FontAwesomeIcons.info,
-                    color: Color(0xFF2797FF),
-                    size: 24,
-                  ),
-                  onPressed: () {
-                    Navigator.pushNamed(context,"/creatorInfo");
-                  },
-                ),
+            IconButton(
+              icon: Icon(
+                Icons.info,
+                color: widget.isDarkMode ? Colors.white : Color(0xFF2797FF),
               ),
-            )
+              onPressed: () {
+                Navigator.pushNamed(context, "/creatorInfo");
+              },
+            ),
           ],
           centerTitle: false,
           elevation: 0,
@@ -258,7 +261,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                     hintText: 'Enter number of reps...',
                     hintStyle: GoogleFonts.getFont(
                       'Manrope',
-                      color: Color(0xFF161C24),
+                      color: widget.isDarkMode ? Colors.white : Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -293,7 +296,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                   ),
                   style: GoogleFonts.getFont(
                     'Manrope',
-                    color: Color(0xFF161C24),
+                    color: widget.isDarkMode ? Colors.white : Colors.black,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -311,7 +314,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                     hintText: 'Enter distance in meters...',
                     hintStyle: GoogleFonts.getFont(
                       'Manrope',
-                      color: Color(0xFF161C24),
+                      color: widget.isDarkMode ? Colors.white : Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -346,7 +349,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                   ),
                   style: GoogleFonts.getFont(
                     'Manrope',
-                    color: Color(0xFF161C24),
+                    color: widget.isDarkMode ? Colors.white : Colors.black,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -368,7 +371,8 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                           hintText: '00',
                           hintStyle: GoogleFonts.getFont(
                             'Manrope',
-                            color: Color(0xFF161C24),
+                            color:
+                                widget.isDarkMode ? Colors.white : Colors.black,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
@@ -403,7 +407,8 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                         ),
                         style: GoogleFonts.getFont(
                           'Manrope',
-                          color: Color(0xFF161C24),
+                          color:
+                              widget.isDarkMode ? Colors.white : Colors.black,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
@@ -424,7 +429,8 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                           hintText: '00',
                           hintStyle: GoogleFonts.getFont(
                             'Manrope',
-                            color: Color(0xFF161C24),
+                            color:
+                                widget.isDarkMode ? Colors.white : Colors.black,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
@@ -459,7 +465,8 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                         ),
                         style: GoogleFonts.getFont(
                           'Manrope',
-                          color: Color(0xFF161C24),
+                          color:
+                              widget.isDarkMode ? Colors.white : Colors.black,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
@@ -557,7 +564,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                       Duration(milliseconds: _timerController.rawTime.value)),
                   style: GoogleFonts.getFont(
                     'Outfit',
-                    color: Color(0xFF161C24),
+                    color: widget.isDarkMode ? Colors.white : Colors.black,
                     fontSize: 57,
                     fontWeight: FontWeight.normal,
                   ),
@@ -577,7 +584,9 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                             'Repetições',
                             style: GoogleFonts.getFont(
                               'Manrope',
-                              color: Color(0xFF161C24),
+                              color: widget.isDarkMode
+                                  ? Colors.white
+                                  : Colors.black,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -593,7 +602,9 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                             'Metros',
                             style: GoogleFonts.getFont(
                               'Manrope',
-                              color: Color(0xFF161C24),
+                              color: widget.isDarkMode
+                                  ? Colors.white
+                                  : Colors.black,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -609,7 +620,9 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                             'Intervalo',
                             style: GoogleFonts.getFont(
                               'Manrope',
-                              color: Color(0xFF161C24),
+                              color: widget.isDarkMode
+                                  ? Colors.white
+                                  : Colors.black,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -641,7 +654,9 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                                   repetitions,
                                   style: GoogleFonts.getFont(
                                     'Manrope',
-                                    color: Color(0xFF161C24),
+                                    color: widget.isDarkMode
+                                        ? Colors.white
+                                        : Colors.black,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -658,7 +673,9 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                                   meters,
                                   style: GoogleFonts.getFont(
                                     'Manrope',
-                                    color: Color(0xFF161C24),
+                                    color: widget.isDarkMode
+                                        ? Colors.white
+                                        : Colors.black,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -675,7 +692,9 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                                   interval,
                                   style: GoogleFonts.getFont(
                                     'Manrope',
-                                    color: Color(0xFF161C24),
+                                    color: widget.isDarkMode
+                                        ? Colors.white
+                                        : Colors.black,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -686,19 +705,6 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                         ],
                       );
                     },
-                  ),
-                ),
-                SizedBox(height: 20),
-                Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(16, 0, 0, 0),
-                  child: Text(
-                    'Training will start once you hit \'Start\'. The timer will reset and move to the next interval after each interval time is reached, until the training is completed.',
-                    style: GoogleFonts.getFont(
-                      'Manrope',
-                      color: Color(0xFF636F81),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
                   ),
                 ),
               ],
