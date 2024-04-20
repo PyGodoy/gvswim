@@ -2,6 +2,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
 class GvswimModel {
@@ -47,15 +48,22 @@ late AudioPlayer advancedPlayer;
 
 class GvswimWidget extends StatefulWidget {
   final bool isDarkMode;
+  final bool isLocked; // Adicionando o parâmetro isLocked
   final Function() toggleTheme;
+  final Function() toggleLock;
 
-  const GvswimWidget(
-      {Key? key, required this.isDarkMode, required this.toggleTheme})
-      : super(key: key);
+  const GvswimWidget({
+    Key? key,
+    required this.isDarkMode,
+    required this.isLocked, // Adicionando o parâmetro isLocked
+    required this.toggleTheme,
+    required this.toggleLock,
+  }) : super(key: key);
 
   @override
   State<GvswimWidget> createState() => _GvswimWidgetState();
 }
+
 
 class _GvswimWidgetState extends State<GvswimWidget> {
   late GvswimModel _model;
@@ -67,6 +75,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
   bool soundPlayed = false;
   late AudioCache audioCache;
 
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +86,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
     );
     advancedPlayer = AudioPlayer();
   }
+
 
   Duration _calculateCurrentIntervalTime() {
     if (trainingInfoList.isNotEmpty) {
@@ -157,6 +167,10 @@ class _GvswimWidgetState extends State<GvswimWidget> {
   }
 
   void _addTrainingInfo() {
+    if (widget.isLocked) {
+      return; // Impede a adição de informações se estiver bloqueado
+    }
+
     final repetitions = _model.textController1.text;
     final meters = _model.textController2.text;
     final minutes = _model.textController3Minutes.text;
@@ -177,24 +191,31 @@ class _GvswimWidgetState extends State<GvswimWidget> {
     _model.dispose();
     _timerController.dispose();
     advancedPlayer.dispose();
+    _enableSystemUI(); // Garante que a UI do sistema seja habilitada ao sair
     super.dispose();
+  }
+
+  void _disableSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+  }
+
+   void _enableSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (Theme.of(context).platform == TargetPlatform.iOS) {
-      SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle(
-          statusBarBrightness: Theme.of(context).brightness,
-          systemStatusBarContrastEnforced: true,
-        ),
-      );
+    if (widget.isLocked) {
+      _disableSystemUI(); // Desabilita a UI do sistema se estiver bloqueado
+    } else {
+      _enableSystemUI(); // Garante que a UI do sistema seja habilitada se não estiver bloqueado
     }
 
-    return GestureDetector(
-      onTap: () => _model.textFieldFocusNode1.canRequestFocus
-          ? FocusScope.of(context).requestFocus(_model.textFieldFocusNode1)
-          : FocusScope.of(context).unfocus(),
+    return WillPopScope(
+      onWillPop: () async {
+        // Impede a ação de voltar (minimizar) se o aplicativo estiver bloqueado
+        return !widget.isLocked;
+      },
       child: Scaffold(
         backgroundColor: widget.isDarkMode ? Colors.black : Color(0xFFF0F5F9),
         appBar: AppBar(
@@ -204,10 +225,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
             'GV SWIM',
             style: GoogleFonts.getFont(
               'Outfit',
-              color: widget.isDarkMode
-                  ? Colors.white
-                  : Color(
-                      0xFF161C24), // Alterado para branco se o modo escuro estiver ativado
+              color: widget.isDarkMode ? Colors.white : Color(0xFF161C24),
               fontSize: 32,
               fontWeight: FontWeight.w600,
             ),
@@ -221,37 +239,54 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                   child: child,
                 );
               },
+              child: IgnorePointer(
+                ignoring: widget.isLocked, // Ignora toques se estiver bloqueado
+                child: IconButton(
+                  key: ValueKey<bool>(widget.isDarkMode),
+                  icon: Icon(
+                    widget.isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                    color: widget.isDarkMode ? Colors.white : Color(0xFF2797FF),
+                  ),
+                  onPressed: () {
+                    widget.toggleTheme();
+                  },
+                ),
+              ),
+            ),
+            IgnorePointer(
+              ignoring: widget.isLocked, // Ignora toques se estiver bloqueado
               child: IconButton(
-                key: ValueKey<bool>(widget.isDarkMode),
                 icon: Icon(
-                  widget.isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                  Icons.info,
                   color: widget.isDarkMode ? Colors.white : Color(0xFF2797FF),
                 ),
                 onPressed: () {
-                  widget.toggleTheme();
+                  Navigator.pushNamed(context, "/creatorInfo");
                 },
               ),
             ),
             IconButton(
-              icon: Icon(
-                Icons.info,
-                color: widget.isDarkMode ? Colors.white : Color(0xFF2797FF),
+                icon: Icon(
+                  widget.isLocked ? Icons.lock : Icons.lock_open,
+                  color: widget.isDarkMode ? Colors.white : Color(0xFF2797FF),
+                ),
+                onPressed: () {
+                  widget.toggleLock(); // Alternar o estado de bloqueio
+                },
               ),
-              onPressed: () {
-                Navigator.pushNamed(context, "/creatorInfo");
-              },
-            ),
-          ],
+            ],
           centerTitle: false,
           elevation: 0,
         ),
-        body: SafeArea(
-          top: true,
-          child: Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
+        body: AbsorbPointer(
+          absorbing: widget.isLocked, // Absorve toques se estiver bloqueado
+          child: SafeArea(
+            top: true,
+            child: Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
                 TextFormField(
                   controller: _model.textController1,
                   focusNode: _model.textFieldFocusNode1,
@@ -697,21 +732,22 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                                         : Colors.black,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
+                                    ),
                                   ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                              ),
+                            ],
+                          );
+                       },
+                     ),
+                   ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        )
+      );
   }
 }

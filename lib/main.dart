@@ -13,10 +13,17 @@ class ThemeSwitchingApp extends StatefulWidget {
 
 class _ThemeSwitchingAppState extends State<ThemeSwitchingApp> {
   bool _isDarkMode = false;
+  bool _isLocked = false;
 
   void toggleTheme() {
     setState(() {
       _isDarkMode = !_isDarkMode;
+    });
+  }
+
+  void toggleLock() {
+    setState(() {
+      _isLocked = !_isLocked;
     });
   }
 
@@ -36,6 +43,8 @@ class _ThemeSwitchingAppState extends State<ThemeSwitchingApp> {
         '/': (context) => GvswimWidget(
               isDarkMode: _isDarkMode,
               toggleTheme: toggleTheme,
+              isLocked: _isLocked,
+              toggleLock: toggleLock,
             ),
         '/creatorInfo': (context) => CreatorInfoPage(),
       },
