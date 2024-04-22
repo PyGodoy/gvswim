@@ -1,8 +1,10 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
 class GvswimModel {
@@ -196,11 +198,17 @@ class _GvswimWidgetState extends State<GvswimWidget> {
   }
 
   void _disableSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-  }
+  SystemChrome.setEnabledSystemUIMode(
+  SystemUiMode.immersiveSticky,
+  );
+  
+}
 
    void _enableSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: SystemUiOverlay.values); // Habilita a UI do sistema
+    FlutterWindowManager.clearFlags; // Limpa todas as flags
+    
   }
 
   @override

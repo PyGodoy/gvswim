@@ -38,6 +38,8 @@ dependencies:
   url_launcher_platform_interface: 2.1.2
   audioplayers: ^5.2.0
   assets_audio_player: ^3.0.0
+  overlay_support: ^2.1.0
+  flutter_windowmanager: ^0.2.0
 
 dev_dependencies:
   flutter_lints: 3.0.0

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gv_swim/pages/CreatorInfoPage.dart';
 import 'package:gv_swim/pages/gvswim.dart';
+import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 
 void main() {
   runApp(ThemeSwitchingApp());
@@ -22,10 +23,15 @@ class _ThemeSwitchingAppState extends State<ThemeSwitchingApp> {
   }
 
   void toggleLock() {
-    setState(() {
-      _isLocked = !_isLocked;
-    });
-  }
+  setState(() {
+    _isLocked = !_isLocked;
+    if (_isLocked) {
+      FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
+    } else {
+      FlutterWindowManager.clearFlags(FlutterWindowManager.FLAG_SECURE);
+    }
+  });
+}
 
   @override
   Widget build(BuildContext context) {
