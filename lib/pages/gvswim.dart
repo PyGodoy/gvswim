@@ -576,10 +576,21 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                             if (_timerController.isRunning) {
                               _timerController.onStopTimer();
                             } else {
-                              _timerController.onStartTimer();
+                              // Exibir a contagem regressiva antes de iniciar o treino
+                              widget.toggleLock();
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => CountdownWidget(
+                                  onFinish: () {
+                                    Navigator.pop(context); // Fechar o diálogo de contagem regressiva
+                                    _timerController.onStartTimer(); // Iniciar o treino
+                                    setState(() {}); // Atualizar o widget
+                                  },
+                                ),
+                              );
                             }
-                            setState(
-                                () {}); // Atualiza o estado do widget após iniciar/pausar o cronômetro
+                            setState(() {});
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF2797FF),
@@ -588,8 +599,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                             ),
                           ),
                           child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               _timerController.isRunning ? 'Pause' : 'Start',
                               style: GoogleFonts.getFont(
@@ -643,72 +653,71 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                       ),
                     ),
                     SizedBox(height: 20),
-                    Container(
-                      constraints: BoxConstraints(
-                        maxHeight: 250, // Altura máxima da tabela
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.transparent,
-                      ),
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          headingRowColor: MaterialStateColor.resolveWith(
-                              (states) => Colors.transparent!),
-                          columns: [
-                            DataColumn(
-                              label: SizedBox(
-                                width: 100, // Largura da célula DataColumn
-                                child: Center(child: Text('Repetições')),
-                              ),
-                            ),
-                            DataColumn(
-                              label: SizedBox(
-                                width: 100, // Largura da célula DataColumn
-                                child: Center(child: Text('Metros')),
-                              ),
-                            ),
-                            DataColumn(
-                              label: SizedBox(
-                                width: 100, // Largura da célula DataColumn
-                                child: Center(child: Text('Intervalo')),
-                              ),
-                            ),
-                          ],
-                          rows: trainingInfoList.map((training) {
-                            final repetitions = training.split('x')[0];
-                            final meters = training.split('x')[1];
-                            final interval = training.split('x')[2];
-                            return DataRow(cells: [
-                              DataCell(
-                                Center(
-                                  child: Text(
-                                    repetitions,
-                                    textAlign: TextAlign
-                                        .center, // Centralizar horizontalmente
-                                  ),
+                    Center(
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxHeight: 250, // Altura máxima da tabela
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.transparent,
+                        ),
+                        child: SingleChildScrollView(
+                          child: DataTable(
+                            headingRowColor: MaterialStateColor.resolveWith(
+                                (states) => Colors.transparent),
+                            columns: [
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 60, // Largura fixa da célula DataColumn
+                                  child: Center(child: Text('Repetições')),
                                 ),
                               ),
-                              DataCell(
-                                Center(
-                                  child: Text(
-                                    meters,
-                                    textAlign: TextAlign
-                                        .center, // Centralizar horizontalmente
-                                  ),
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 60, // Largura fixa da célula DataColumn
+                                  child: Center(child: Text('Metros')),
                                 ),
                               ),
-                              DataCell(
-                                Center(
-                                  child: Text(
-                                    interval,
-                                    textAlign: TextAlign
-                                        .center, // Centralizar horizontalmente
-                                  ),
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 60, // Largura fixa da célula DataColumn
+                                  child: Center(child: Text('Intervalo')),
                                 ),
                               ),
-                            ]);
-                          }).toList(),
+                            ],
+                            rows: trainingInfoList.map((training) {
+                              final repetitions = training.split('x')[0];
+                              final meters = training.split('x')[1];
+                              final interval = training.split('x')[2];
+                              return DataRow(cells: [
+                                DataCell(
+                                  Center(
+                                    child: Text(
+                                      repetitions,
+                                      textAlign: TextAlign.center, // Centralizar horizontalmente
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  Center(
+                                    child: Text(
+                                      meters,
+                                      textAlign: TextAlign.center, // Centralizar horizontalmente
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  Center(
+                                    child: Text(
+                                      interval,
+                                      textAlign: TextAlign.center, // Centralizar horizontalmente
+                                    ),
+                                  ),
+                                ),
+                              ]);
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -718,5 +727,84 @@ class _GvswimWidgetState extends State<GvswimWidget> {
             ),
           ),
         ));
+  }
+}
+
+class CountdownWidget extends StatefulWidget {
+  final Function onFinish;
+
+  const CountdownWidget({Key? key, required this.onFinish}) : super(key: key);
+
+  @override
+  _CountdownWidgetState createState() => _CountdownWidgetState();
+}
+
+class _CountdownWidgetState extends State<CountdownWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  late AudioPlayer _player; // Variável de instância para o AudioPlayer
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer(); // Inicializar o AudioPlayer
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 5), // Duração da contagem regressiva
+    );
+    _animation = Tween<double>(
+      begin: 6.0, // Iniciar contagem regressiva a partir de 5 segundos
+      end: 1.0,
+    ).animate(_controller)
+      ..addListener(() {
+        setState(() {}); // Atualizar o widget com base no valor da animação
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          widget.onFinish(); // Chamada quando a contagem regressiva terminar
+        } else if (_animation.value >= 1.73 && _animation.value <= 1.83 && !_controller.isAnimating) {
+          _playSound(); // Reproduzir áudio quando faltar aproximadamente 1.73 segundos
+        }
+      });
+
+    _controller.forward(); // Iniciar a animação
+  }
+
+  void _playSound() {
+    _player.play(AssetSource("saida.mp3")); // Utilizar a instância de AudioPlayer
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _player.dispose(); // Dispose do AudioPlayer
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Center(
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Color(0xFF2797FF).withOpacity(0.5), // Cor de fundo com transparência
+          ),
+          width: 200,
+          height: 200,
+          child: Center(
+            child: Text(
+              _animation.value.toInt().toString(), // Exibir o valor da contagem regressiva
+              style: TextStyle(
+                fontSize: 48,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
