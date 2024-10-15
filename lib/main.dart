@@ -16,7 +16,7 @@ class _ThemeSwitchingAppState extends State<ThemeSwitchingApp> {
   bool _isDarkMode = false;
   bool _isLocked = false;
 
-  void toggleTheme() {
+  void toggleTheme() { 
     setState(() {
       _isDarkMode = !_isDarkMode;
     });

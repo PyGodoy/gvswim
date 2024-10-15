@@ -73,6 +73,7 @@ class _GvswimWidgetState extends State<GvswimWidget> {
   String intervalLabel = 'Intervalo';
   bool soundPlayed = false;
   late AudioCache audioCache;
+  int _currentTrainingIndex = 0; // Adicionando índice para rastrear o treino atual
 
   @override
   void initState() {
@@ -131,27 +132,31 @@ class _GvswimWidgetState extends State<GvswimWidget> {
   }
 
   void _updateTraining() {
-    if (trainingInfoList.isNotEmpty) {
-      final currentTraining = trainingInfoList.first;
-      final currentRepetition = int.parse(currentTraining.split('x')[0]);
+  if (trainingInfoList.isNotEmpty) {
+    final currentTraining = trainingInfoList.first;
+    final currentRepetition = int.parse(currentTraining.split('x')[0]);
 
-      if (currentRepetition > 1) {
-        final newTraining =
-            '${currentRepetition - 1}${currentTraining.substring(currentTraining.indexOf('x'))}';
-        trainingInfoList[0] = newTraining;
-        _timerController.onResetTimer(); // Reiniciar o timer
-        _timerController.onStartTimer(); // Iniciar o novo timer
+    if (currentRepetition > 1) {
+      final newTraining =
+          '${currentRepetition - 1}${currentTraining.substring(currentTraining.indexOf('x'))}';
+      trainingInfoList[0] = newTraining;
+      _timerController.onResetTimer(); // Reiniciar o timer para o novo treino
+      _timerController.onStartTimer(); // Iniciar o novo timer
+    } else {
+      trainingInfoList.removeAt(0);
+      if (trainingInfoList.isEmpty) {
+        // Limpar a lista de treinos quando todos os treinos forem concluídos
+        _timerController.onStopTimer();
+        _timerController.setPresetTime(mSec: 0);
       } else {
-        trainingInfoList.removeAt(0);
-        if (trainingInfoList.isEmpty) {
-          // Limpar a lista de treinos e parar o timer quando todos os treinos forem concluídos
-          _timerController.onStopTimer();
-          _timerController.setPresetTime(mSec: 0);
-        }
+        // Reiniciar o timer para o próximo treino
+        _timerController.onResetTimer();
+        _timerController.onStartTimer();
       }
     }
-    setState(() {});
   }
+  setState(() {});
+}
 
   String _formattedTime(Duration duration) {
     final minutes = duration.inMinutes;
@@ -201,8 +206,13 @@ class _GvswimWidgetState extends State<GvswimWidget> {
   void _removeTrainingInfo(int index) {
     setState(() {
       trainingInfoList.removeAt(index);
+      // Se removemos o treino atual, ajustamos o índice atual
+      if (_currentTrainingIndex > 0 && index < _currentTrainingIndex) {
+        _currentTrainingIndex--;
+      }
     });
   }
+
 
   @override
   void dispose() {
@@ -673,100 +683,86 @@ class _GvswimWidgetState extends State<GvswimWidget> {
                       ),
                     ),
                     SizedBox(height: 20),
-                    Center(
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxHeight: 250, // Altura máxima da tabela
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.transparent,
-                        ),
-                        child: SingleChildScrollView(
-                          child: DataTable(
-                            headingRowColor: MaterialStateColor.resolveWith(
-                                (states) => Colors.transparent),
-                            columns: [
-                              DataColumn(
-                                label: SizedBox(
-                                  width:
-                                      60, // Largura fixa da célula DataColumn
-                                  child: Center(child: Text('Repetições')),
-                                ),
-                              ),
-                              DataColumn(
-                                label: SizedBox(
-                                  width:
-                                      60, // Largura fixa da célula DataColumn
-                                  child: Center(child: Text('Metros')),
-                                ),
-                              ),
-                              DataColumn(
-                                label: SizedBox(
-                                  width:
-                                      60, // Largura fixa da célula DataColumn
-                                  child: Center(child: Text('Intervalo')),
-                                ),
-                              ),
-                            ],
-                            rows: trainingInfoList.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final training = entry.value;
-                              final repetitions = training.split('x')[0];
-                              final meters = training.split('x')[1];
-                              final interval = training.split('x')[2];
-                              return DataRow(cells: [
-                                DataCell(
-                                  Center(
-                                    child: Text(
-                                      repetitions,
-                                      textAlign: TextAlign
-                                          .center, // Centralizar horizontalmente
-                                    ),
-                                  ),
-                                ),
-                                DataCell(
-                                  Center(
-                                    child: Text(
-                                      meters,
-                                      textAlign: TextAlign
-                                          .center, // Centralizar horizontalmente
-                                    ),
-                                  ),
-                                ),
-                                DataCell(
-                                  Center(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          interval,
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        IconButton(
-                                          icon: Icon(Icons.delete),
-                                          onPressed: () {
-                                            _removeTrainingInfo(index);
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ]);
-                            }).toList(),
-                          ),
+                    Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical, // Permite rolar verticalmente
+              child: DataTable(
+                headingRowColor: MaterialStateColor.resolveWith(
+                  (states) => Colors.transparent,
+                ),
+                columns: [
+                  DataColumn(
+                    label: SizedBox(
+                      width: 60, // Largura fixa da célula DataColumn
+                      child: Center(child: Text('Repetições')),
+                    ),
+                  ),
+                  DataColumn(
+                    label: SizedBox(
+                      width: 60, // Largura fixa da célula DataColumn
+                      child: Center(child: Text('Metros')),
+                    ),
+                  ),
+                  DataColumn(
+                    label: SizedBox(
+                      width: 60, // Largura fixa da célula DataColumn
+                      child: Center(child: Text('Intervalo')),
+                    ),
+                  ),
+                ],
+                rows: trainingInfoList.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final training = entry.value;
+                  final parts = training.split('x');
+                  final repetitions = parts.length > 0 ? parts[0] : '';
+                  final meters = parts.length > 1 ? parts[1] : '';
+                  final interval = parts.length > 2 ? parts[2] : '';
+                  return DataRow(cells: [
+                    DataCell(
+                      Center(
+                        child: Text(
+                          repetitions,
+                          textAlign: TextAlign.center, // Centralizar horizontalmente
                         ),
                       ),
                     ),
-                  ],
-                ),
+                    DataCell(
+                      Center(
+                        child: Text(
+                          meters,
+                          textAlign: TextAlign.center, // Centralizar horizontalmente
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              interval,
+                              textAlign: TextAlign.center,
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete),
+                              onPressed: () {
+                                _removeTrainingInfo(index);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ]);
+                }).toList(),
               ),
             ),
           ),
-        ));
-  }
+        ],
+      ),
+    ),
+  ))));
+}
 }
 
 class CountdownWidget extends StatefulWidget {
